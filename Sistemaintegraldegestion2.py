@@ -326,7 +326,7 @@ class Reserva:
                 self.servicio.desactivar_seguro()
         return self.servicio.calcular_costo(cantidad)
 
-    def cancelar_reserva(self):
+    def cancelar_reserva(self) -> dict:
         """Cancela la reserva y calcula el costo correspondiente a la cantidad de tiempo consumido."""
         if self.estado != "Pendiente":
             raise ReservaError(f"No se puede cancelar una reserva en estado '{self.estado}'.")
@@ -349,7 +349,7 @@ class Reserva:
         
         return desglose
 
-    def procesar_reserva(self) -> float:
+    def procesar_reserva(self) -> dict:
         """Procesa la reserva y calcula el costo total basado en la duración contratada."""
         if self.estado != "Pendiente":
             raise ReservaError(f"No se puede procesar una reserva en estado '{self.estado}'.")
