@@ -90,6 +90,8 @@ class Cliente(EntidadBase):
             raise ClienteNoValidoError(
                 "El correo no puede contener espacios."
             )
+        
+        return correo
 
     @property
     def identificacion(self):
