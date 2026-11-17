@@ -277,7 +277,7 @@ class Reserva:
         
         self.id_reserva = id_reserva
         self.cliente = cliente
-        self.servicio = servicio
+        self.servicio = servicio 
         
         self.cantidad_reservada = cantidad_reservada
         self.cantidad_transcurrida = 0
