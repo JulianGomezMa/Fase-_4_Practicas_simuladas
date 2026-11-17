@@ -116,10 +116,10 @@ class Cliente(EntidadBase):
 class Servicio(EntidadBase, ABC):
     def __init__(self, codigo: str, nombre_servicio: str, costo_base: float):
         if not codigo or not codigo.strip():
-            raise ValueError("El código es obligatorio.")
+            raise ValueError("The code is required.")
         if not isinstance(costo_base, (int, float)) or isinstance(costo_base, bool) or costo_base <= 0:
-            raise ValueError("El costo base debe ser un número mayor a cero.")
-        
+            raise ValueError("The base cost must be a number greater than zero.")
+
         self.codigo = codigo
         self.nombre_servicio = nombre_servicio
         self.costo_base = costo_base
@@ -131,16 +131,16 @@ class Servicio(EntidadBase, ABC):
 
 class ReservaSalas(Servicio):
     def __init__(self, codigo: str, costo_base: float, capacidad: int):
-        super().__init__(codigo, "Reserva de Sala", costo_base)
+        super().__init__(codigo, "Room Reservation", costo_base)
         if not isinstance(capacidad, int) or isinstance(capacidad, bool) or capacidad <= 0:
-            raise ValueError("La capacidad debe ser un número entero positivo.")
+            raise ValueError("The capacity must be a positive integer.")
         self.capacidad = capacidad
 
     def calcular_costo(self, horas: int) -> dict:
         """Calcula el costo de la sala y devuelve el desglose."""
 
         if not isinstance(horas, int) or isinstance(horas, bool) or horas < 0:
-            raise ValueError("Las horas deben ser un entero positivo o cero.")
+            raise ValueError("The hours must be a positive integer or zero.")
 
         descuento = 0.0
         if horas >= 5:
@@ -171,9 +171,9 @@ class ReservaSalas(Servicio):
 
 class AlquilerEquipos(Servicio):
     def __init__(self, codigo: str, costo_base: float, tipo_equipo: str):
-        super().__init__(codigo, "Alquiler de Equipo", costo_base)
+        super().__init__(codigo, "Equipment Rental", costo_base)
         if not tipo_equipo or not tipo_equipo.strip():
-            raise ValueError("El tipo de equipo es obligatorio.")
+            raise ValueError("The equipment type is required.")
         self.tipo_equipo = tipo_equipo
         self.seguro_activado = False
 
@@ -181,7 +181,7 @@ class AlquilerEquipos(Servicio):
         """Calcula el costo del equipo y devuelve el desglose."""
         if (not isinstance(dias, int) or isinstance(dias, bool) or dias < 0):
             raise ValueError(
-                "Los días de alquiler deben ser un número entero positivo o cero."
+                "The rental days must be a positive integer or zero."
             )
 
         descuento = 0.0
@@ -211,12 +211,12 @@ class AlquilerEquipos(Servicio):
     def activar_seguro(self):
         """Activa el seguro adicional para el alquiler del equipo."""
         self.seguro_activado = True
-        logging.info(f"Seguro activado para el equipo {self.codigo}.")
+        logging.info(f"Equipment {self.codigo} insurance activated.")
 
     def desactivar_seguro(self):
         """Desactiva el seguro adicional del equipo."""
         self.seguro_activado = False
-        logging.info(f"Seguro desactivado para el equipo {self.codigo}.")
+        logging.info(f"Equipment {self.codigo} insurance deactivated.")
 
     def obtener_detalles(self) -> str:
         return f"[Equipo] {self.tipo_equipo} ({self.codigo}) - Costo/día: ${self.costo_base}"
@@ -226,16 +226,16 @@ class AlquilerEquipos(Servicio):
 
 class AsesoriaEspecializada(Servicio):
     def __init__(self, codigo: str, costo_base: float, area: str):
-        super().__init__(codigo, "Asesoría Especializada", costo_base)
+        super().__init__(codigo, "Specialized Consulting", costo_base)
         if not area or not area.strip():
-            raise ValueError("El área de asesoría es obligatoria.")
+            raise ValueError("The consulting area is required.")
         self.area = area
 
     def calcular_costo(self, sesiones: int) -> dict:
         """Calcula el costo de la asesoría y devuelve el desglose."""   
 
         if not isinstance(sesiones, int) or isinstance(sesiones, bool) or sesiones < 0:
-            raise ValueError("Las sesiones deben ser un entero positivo o cero.")   
+            raise ValueError("The number of sessions must be a positive integer or zero.")   
 
         descuento = 0.0 
         if sesiones >= 5:
@@ -271,10 +271,10 @@ class AsesoriaEspecializada(Servicio):
 class Reserva:
     def __init__(self, id_reserva: str, cliente: Cliente, servicio: Servicio, cantidad_reservada: int, seguro_aplicado: bool = False):
         if not id_reserva or not id_reserva.strip():
-            raise ReservaError("El ID de la reserva es obligatorio.")
+            raise ReservaError("The ID of the reservation is required.")
         if not isinstance(cantidad_reservada, int) or cantidad_reservada <= 0:
-            raise ReservaError("La cantidad reservada debe ser un número entero positivo.")
-        
+            raise ReservaError("The reserved amount must be a positive integer.")
+
         self.id_reserva = id_reserva
         self.cliente = cliente
         self.servicio = servicio 
@@ -292,18 +292,18 @@ class Reserva:
     def avanzar_tiempo(self, cantidad: int):
         """simula el consumo de tiempo de la reserva, avanzando la cantidad especificada."""
         if self.estado != "Pendiente":
-            raise ReservaError("Solo se puede consumir tiempo en reservas pendientes.")
+            raise ReservaError("Only pending reservations can consume time.")
         if not isinstance(cantidad, int) or isinstance(cantidad, bool) or cantidad <= 0:
-            raise ValueError("La cantidad de tiempo a avanzar debe ser un número entero positivo.")
+            raise ValueError("The amount of time to advance must be a positive integer.")
         
         nueva_cantidad = self.cantidad_transcurrida + cantidad      
         if nueva_cantidad > self.cantidad_reservada:
-            raise ReservaError("La cantidad transcurrida no puede superar la cantidad contratada.")
+            raise ReservaError("The consumed amount cannot exceed the contracted amount.")
         
         self.cantidad_transcurrida = nueva_cantidad
         logging.info(
-            f"Reserva {self.id_reserva}: "
-            f"{self.cantidad_transcurrida}/{self.cantidad_reservada} unidades consumidas."
+            f"Reservation {self.id_reserva}: "
+            f"{self.cantidad_transcurrida}/{self.cantidad_reservada} units consumed."
             )
 
     def obtener_cantidad_restante(self) -> int:
@@ -329,11 +329,11 @@ class Reserva:
     def cancelar_reserva(self) -> dict:
         """Cancela la reserva y calcula el costo correspondiente a la cantidad de tiempo consumido."""
         if self.estado != "Pendiente":
-            raise ReservaError(f"No se puede cancelar una reserva en estado '{self.estado}'.")
+            raise ReservaError(f"You cannot cancel a reservation in state '{self.estado}'.")
         if self.cantidad_transcurrida == self.cantidad_reservada:
             raise ReservaError(
-                "la cantidad reservada ya fue consumida "
-                "por completo. Debe procesar la reserva"
+                "The reserved amount has already been consumed "
+                "completely. You must process the reservation."
             )
         
         desglose = self.obtener_desglose_costo()
@@ -342,9 +342,9 @@ class Reserva:
         self.estado = "Cancelada"
         
         logging.info(
-            f"Reserva {self.id_reserva} cancelada. "
-            f"Cantidad consumida: {self.cantidad_transcurrida}. "
-            f"Costo: ${costo}"
+            f"Reservation {self.id_reserva} canceled. "
+            f"Consumed amount: {self.cantidad_transcurrida}. "
+            f"Cost: ${costo}"
             )
         
         return desglose
@@ -352,10 +352,10 @@ class Reserva:
     def procesar_reserva(self) -> dict:
         """Procesa la reserva y calcula el costo total basado en la duración contratada."""
         if self.estado != "Pendiente":
-            raise ReservaError(f"No se puede procesar una reserva en estado '{self.estado}'.")
+            raise ReservaError(f"You cannot process a reservation in state '{self.estado}'.")
         if self.cantidad_transcurrida == 0:
             raise ReservaError(
-                "No se puede finalizar una reserva sin haber consumido ninguna unidad. "
+                "You cannot finalize a reservation without having consumed any units."
             )
         
         desglose = self.obtener_desglose_costo()
@@ -363,19 +363,19 @@ class Reserva:
         self.estado = "Finalizada"
         
         logging.info(
-            f"Reserva {self.id_reserva} finalizada."
-            f"Cantidad consumida: {self.cantidad_transcurrida}. "
-            f"Costo: ${costo}"
+            f"Reservation {self.id_reserva} finalized."
+            f"Consumed amount: {self.cantidad_transcurrida}. "
+            f"Cost: ${costo}"
         )
         return desglose
 
     def __str__(self):
         return (
-            f"Reserva {self.id_reserva} - "
-            f"Cliente: {self.cliente.nombre} - "
-            f"Servicio: {self.servicio.nombre_servicio} - "
-            f"Uso: {self.cantidad_transcurrida}/{self.cantidad_reservada} - "
-            f"Estado: {self.estado}"
+            f"Reservation {self.id_reserva} - "
+            f"Client: {self.cliente.nombre} - "
+            f"Service: {self.servicio.nombre_servicio} - "
+            f"Usage: {self.cantidad_transcurrida}/{self.cantidad_reservada} - "
+            f"State: {self.estado}"
         )
 
 # --- GESTOR GENERAL DEL SISTEMA ---
@@ -387,25 +387,25 @@ class SistemaFJ:
 
     def registrar_cliente(self, cliente: Cliente):
         if any(c.identificacion == cliente.identificacion for c in self.clientes):
-            raise ClienteNoValidoError("El cliente ya se encuentra registrado.")
+            raise ClienteNoValidoError("The client is already registered.")
         self.clientes.append(cliente)
-        logging.info(f"Cliente registrado: {cliente.nombre}")
+        logging.info(f"Client registered: {cliente.nombre}")
 
     def registrar_servicio(self, servicio: Servicio):
         if any(s.codigo == servicio.codigo for s in self.servicios):
-            raise ErrorSistemaFJ(f"Ya existe un servicio con el código '{servicio.codigo}'.")
+            raise ErrorSistemaFJ(f"A service already exists with code '{servicio.codigo}'.")
         self.servicios.append(servicio)
-        logging.info(f"Servicio registrado: {servicio.codigo}")
+        logging.info(f"Service registered: {servicio.codigo}")
 
     def registrar_reserva(self, reserva: Reserva):
         if any(r.id_reserva == reserva.id_reserva for r in self.reservas):
-            raise ReservaError(f"Ya existe una reserva con el ID '{reserva.id_reserva}'.")
+            raise ReservaError(f"A reservation already exists with ID '{reserva.id_reserva}'.")
         if reserva.cliente not in self.clientes:
-            raise ReservaError("El cliente no está registrado en el sistema.")
+            raise ReservaError("The client is not registered in the system.")
         if reserva.servicio not in self.servicios:
-            raise ReservaError("El servicio no está registrado en el sistema.")
+            raise ReservaError("The service is not registered in the system.")
         self.reservas.append(reserva)
-        logging.info(f"Reserva registrada: {reserva.id_reserva}")
+        logging.info(f"Reservation registered: {reserva.id_reserva}")
         
     def cargar_clientes_iniciales(self):
         """Carga 10 clientes iniciales para utilizar en el sistema."""
@@ -447,7 +447,7 @@ class SistemaFJApp:
         self.crear_interfaz()
 
     def crear_interfaz(self):
-        titulo = ttk.Label(self.root, text="Sistema de Reservas y Servicios FJ", font=("Arial", 18, "bold"))
+        titulo = ttk.Label(self.root, text="System of Reservations and Services FJ", font=("Arial", 18, "bold"))
         titulo.pack(pady=15)
 
         contenedor = ttk.Frame(self.root)
@@ -458,29 +458,29 @@ class SistemaFJApp:
         self.crear_seccion_resultados()
 
     def crear_seccion_clientes(self, contenedor):
-        frame = ttk.LabelFrame(contenedor, text="Registro de Clientes", padding=15)
+        frame = ttk.LabelFrame(contenedor, text="Client Registration", padding=15)
         frame.grid(row=0, column=0, padx=5, pady=5, sticky="nsew")
 
-        ttk.Label(frame, text="Identificación:").grid(row=0, column=0, sticky="w", pady=5)
+        ttk.Label(frame, text="ID:").grid(row=0, column=0, sticky="w", pady=5)
         self.txt_identificacion = ttk.Entry(frame, width=25)
         self.txt_identificacion.grid(row=0, column=1, pady=5)
 
-        ttk.Label(frame, text="Nombre:").grid(row=1, column=0, sticky="w", pady=5)
+        ttk.Label(frame, text="Name:").grid(row=1, column=0, sticky="w", pady=5)
         self.txt_nombre = ttk.Entry(frame, width=25)
         self.txt_nombre.grid(row=1, column=1, pady=5)
 
-        ttk.Label(frame, text="Correo Electrónico:").grid(row=2, column=0, sticky="w", pady=5)
+        ttk.Label(frame, text="Email:").grid(row=2, column=0, sticky="w", pady=5)
         self.txt_correo = ttk.Entry(frame, width=25)
         self.txt_correo.grid(row=2, column=1, pady=5)
 
-        btn = ttk.Button(frame, text="Registrar Cliente", command=self.accion_registrar_cliente)
+        btn = ttk.Button(frame, text="Register Client", command=self.accion_registrar_cliente)
         btn.grid(row=3, column=0, columnspan=2, pady=15)
 
     def accion_registrar_cliente(self):
         try:
             c = Cliente(self.txt_identificacion.get().strip(), self.txt_nombre.get().strip(), self.txt_correo.get().strip())
             self.sistema.registrar_cliente(c)
-            self.mostrar_resultado(f"Éxito: Cliente {c.nombre} registrado.")
+            self.mostrar_resultado(f"Success: Client {c.nombre} registered.")
             self.actualizar_comboboxes()
             self.txt_identificacion.delete(0, tk.END)
             self.txt_nombre.delete(0, tk.END)
@@ -491,28 +491,28 @@ class SistemaFJApp:
     def crear_seccion_reservas(self, contenedor):
         frame = ttk.LabelFrame(
             contenedor,
-            text="Gestión de Reservas",
+            text="Reservations Management",
             padding=15
         )
         frame.grid(row=0, column=1, padx=5, pady=5, sticky="nsew")
 
         # Selección del cliente
-        ttk.Label(frame, text="Cliente:").grid(row=0, column=0, sticky="w", pady=5)
+        ttk.Label(frame, text="Client:").grid(row=0, column=0, sticky="w", pady=5)
         self.cmb_clientes = ttk.Combobox(frame, width=25, state="readonly")
         self.cmb_clientes.grid(row=0, column=1, pady=5)
 
         # Selección del servicio
-        ttk.Label(frame, text="Servicio:").grid(row=1, column=0, sticky="w", pady=5)
+        ttk.Label(frame, text="Service:").grid(row=1, column=0, sticky="w", pady=5)
         self.cmb_servicios = ttk.Combobox(frame, width=25, state="readonly")
         self.cmb_servicios.grid(row=1, column=1, pady=5)
         self.cmb_servicios.bind("<<ComboboxSelected>>", self.actualizar_info_servicio)
 
         # Información del servicio
-        self.lbl_info_servicio = ttk.Label(frame, text="Seleccione un servicio.")
+        self.lbl_info_servicio = ttk.Label(frame, text="Select a service.")
         self.lbl_info_servicio.grid(row=2, column=0, columnspan=2, pady=5)
 
         # Cantidad reservada
-        ttk.Label(frame, text="Cantidad a reservar:").grid(row=3, column=0, sticky="w", pady=5)
+        ttk.Label(frame, text="Quantity to reserve:").grid(row=3, column=0, sticky="w", pady=5)
         self.txt_cantidad = ttk.Entry(frame, width=25)
         self.txt_cantidad.grid(row=3, column=1, pady=5)
 
@@ -523,12 +523,12 @@ class SistemaFJApp:
         self.chk_seguro.config(state="disabled")
 
         # Crear reserva
-        btn_crear = ttk.Button(frame, text="Crear Reserva", command=self.accion_crear_reserva)
+        btn_crear = ttk.Button(frame, text="Create Reservation", command=self.accion_crear_reserva)
         btn_crear.grid(row=5, column=0, columnspan=2, pady=10)
         ttk.Separator(frame).grid(row=6, column=0, columnspan=2,sticky="ew", pady=10)
 
         # Seleccionar reserva existente
-        ttk.Label(frame, text="Reserva:").grid(row=7, column=0, sticky="w", pady=5)
+        ttk.Label(frame, text="Reservation:").grid(row=7, column=0, sticky="w", pady=5)
         self.cmb_reservas = ttk.Combobox(
             frame,
             width=25,
@@ -538,7 +538,7 @@ class SistemaFJApp:
         self.cmb_reservas.bind("<<ComboboxSelected>>",self.seleccionar_reserva)
 
         # Cantidad a simular
-        ttk.Label(frame, text="Cantidad a consumir:").grid(row=8, column=0, sticky="w", pady=5)
+        ttk.Label(frame, text="Quantity to consume:").grid(row=8, column=0, sticky="w", pady=5)
         self.txt_consumo = ttk.Entry(frame, width=25)
         self.txt_consumo.insert(0, "1")
         self.txt_consumo.grid(row=8, column=1, pady=5)
@@ -546,7 +546,7 @@ class SistemaFJApp:
         # Simular consumo
         btn_avanzar = ttk.Button(
             frame,
-            text="Avanzar Consumo",
+            text="Advance / Simulate Consumption",
             command=self.accion_avanzar_consumo
         )
         btn_avanzar.grid(row=9, column=0, columnspan=2, pady=5)
@@ -554,7 +554,7 @@ class SistemaFJApp:
         # Procesar reserva
         btn_procesar = ttk.Button(
             frame,
-            text="Procesar / Finalizar",
+            text="Process / Finalize",
             command=self.accion_procesar_reserva
         )
         btn_procesar.grid(row=10, column=0, columnspan=2, pady=5)
@@ -562,7 +562,7 @@ class SistemaFJApp:
         # Cancelar reserva
         btn_cancelar = ttk.Button(
             frame,
-            text="Cancelar Reserva",
+            text="Cancel Reservation",
             command=self.accion_cancelar_reserva
         )
         btn_cancelar.grid(row=11, column=0, columnspan=2, pady=5)
@@ -602,7 +602,7 @@ class SistemaFJApp:
             return
         self.lbl_info_servicio.config(
             text=(
-                f"Costo base: ${servicio.costo_base} "
+                f"Base cost: ${servicio.costo_base} "
                 f"| {servicio.nombre_servicio}"
             )
         )
@@ -620,7 +620,7 @@ class SistemaFJApp:
             
             if not cli_nom or not srv_opcion or not cantidad_str:
                 raise ValueError(
-                    "Complete todos los campos de la reserva."
+                    "Complete all fields of the reservation."
                 )
                 
             cantidad = int(cantidad_str)
@@ -644,11 +644,11 @@ class SistemaFJApp:
             mensaje = self.formatear_desglose(
                 reserva,
                 desglose,
-                "RESERVA CREADA - COSTO ESTIMADO"
+                "RESERVATION CREATED - ESTIMATED COST"
             )
             mensaje += (
-                "\nNota: estimación suponiendo que se consume "
-                "toda la cantidad contratada."
+                "\nNote: estimation assuming that all contracted "
+                "quantity is consumed."
             )
             self.mostrar_resultado(mensaje)
             self.actualizar_lista_reservas()
@@ -656,8 +656,8 @@ class SistemaFJApp:
             self.txt_cantidad.delete("0", tk.END)
             self.var_seguro.set(False)
         except Exception as e:
-            self.mostrar_resultado(f"Error al crear reserva: {e}")
-            
+            self.mostrar_resultado(f"Error to create reservation: {e}")
+
     def seleccionar_reserva(self, event=None):
         opcion = self.cmb_reservas.get()
         self.reserva_seleccionada = (
@@ -667,24 +667,24 @@ class SistemaFJApp:
         if self.reserva_seleccionada:
             r = self.reserva_seleccionada
             self.mostrar_resultado(
-                f"Seleccionada: {r.id_reserva} | "
-                f"Uso: {r.cantidad_transcurrida}/{r.cantidad_reservada} | "
-                f"Restante: {r.obtener_cantidad_restante()} | "
-                f"Estado: {r.estado}"
+                f"Selected: {r.id_reserva} | "
+                f"Usage: {r.cantidad_transcurrida}/{r.cantidad_reservada} | "
+                f"Remaining: {r.obtener_cantidad_restante()} | "
+                f"Status: {r.estado}"
             )
             
     def accion_avanzar_consumo(self):
         try:
             reserva = self.reserva_seleccionada
             if reserva is None:
-                raise ReservaError("Seleccione una reserva.")
+                raise ReservaError("Select a reservation.")
             cantidad = int(self.txt_consumo.get().strip())
             reserva.avanzar_tiempo(cantidad)
             self.mostrar_resultado(
-                f"Reserva {reserva.id_reserva}: "
+                f"Reservation {reserva.id_reserva}: "
                 f"{reserva.cantidad_transcurrida}/"
-                f"{reserva.cantidad_reservada} consumidas. "
-                f"Restantes: {reserva.obtener_cantidad_restante()}."
+                f"{reserva.cantidad_reservada} consumed. "
+                f"Remaining: {reserva.obtener_cantidad_restante()}."
             )
             self.actualizar_lista_reservas()
         except Exception as e:
@@ -694,7 +694,7 @@ class SistemaFJApp:
         try:
             reserva = self.reserva_seleccionada
             if reserva is None:
-                raise ReservaError("Seleccione una reserva.")
+                raise ReservaError("Select a reservation.")
             
             desgloce = reserva.obtener_desglose_costo()
             reserva.procesar_reserva()
@@ -702,7 +702,7 @@ class SistemaFJApp:
             mensaje = self.formatear_desglose(
                 reserva,
                 desgloce,
-                "RESERVA FINALIZADA - COSTO TOTAL"
+                "RESERVATION COMPLETED - TOTAL COST"
             )
             self.mostrar_resultado(mensaje)
             self.actualizar_lista_reservas()
@@ -713,7 +713,7 @@ class SistemaFJApp:
         try:
             reserva = self.reserva_seleccionada
             if reserva is None:
-                raise ReservaError("Seleccione una reserva.")
+                raise ReservaError("Select a reservation.")
             
             desgloce = reserva.obtener_desglose_costo()
             reserva.cancelar_reserva()
@@ -721,7 +721,7 @@ class SistemaFJApp:
             mensaje = self.formatear_desglose(
                 reserva,
                 desgloce,
-                "RESERVA CANCELADA"
+                "RESERVATION CANCELLED"
             )
             self.mostrar_resultado(mensaje)
             self.actualizar_lista_reservas()
@@ -739,27 +739,27 @@ class SistemaFJApp:
 
         lineas = [
             f"========== {titulo} ==========",
-            f"Reserva: {reserva.id_reserva}",
-            f"Cliente: {reserva.cliente.nombre}",
-            f"Servicio: {servicio.nombre_servicio}",
-            f"Cantidad consumida: {reserva.cantidad_transcurrida} {unidad}",
-            f"Cantidad contratada: {reserva.cantidad_reservada} {unidad}",
+            f"Reservation: {reserva.id_reserva}",
+            f"Client: {reserva.cliente.nombre}",
+            f"Service: {servicio.nombre_servicio}",
+            f"Consumed Quantity: {reserva.cantidad_transcurrida} {unidad}",
+            f"Contracted Quantity: {reserva.cantidad_reservada} {unidad}",
             "",
-            "DETALLE DEL COSTO",
-            f"Costo base por unidad: ${servicio.costo_base:.2f}",
+            "COST DETAIL",
+            f"Base cost per unit: ${servicio.costo_base:.2f}",
             f"Subtotal: ${desglose['subtotal']:.2f}",
-            f"Descuento ({desglose['porcentaje_descuento']:.0f}%): "
+            f"Discount ({desglose['porcentaje_descuento']:.0f}%): "
             f"-${desglose['descuento']:.2f}",
-            f"Subtotal con descuento: ${desglose['subtotal_descuento']:.2f}"
+            f"Subtotal with discount: ${desglose['subtotal_descuento']:.2f}"
         ]   
 
         if isinstance(servicio, AlquilerEquipos):
-            estado_seguro = "Sí" if reserva.seguro_aplicado else "No"
-            lineas.append(f"Seguro contratado: {estado_seguro}")
-            lineas.append(f"Costo del seguro: +${desglose['seguro']:.2f}")  
+            estado_seguro = "Yes" if reserva.seguro_aplicado else "No"
+            lineas.append(f"Insurance contracted: {estado_seguro}")
+            lineas.append(f"Insurance cost: +${desglose['seguro']:.2f}")  
 
         if isinstance(servicio, AsesoriaEspecializada):
-            lineas.append(f"Impuesto (19%): +${desglose['impuesto']:.2f}")  
+            lineas.append(f"Tax (19%): +${desglose['impuesto']:.2f}")  
 
         lineas.extend([
             "--------------------------------",
@@ -770,7 +770,7 @@ class SistemaFJApp:
         return "\n".join(lineas)
 
     def crear_seccion_resultados(self):
-        frame = ttk.LabelFrame(self.root, text="Consola de Resultados", padding=10)
+        frame = ttk.LabelFrame(self.root, text="Results Console", padding=10)
         frame.pack(fill="both", expand=True, padx=20, pady=10)
 
         self.txt_resultados = tk.Text(frame, height=8, state="disabled")
