@@ -44,24 +44,24 @@ class Cliente(EntidadBase):
         self.__correo = self.__validar_correo(correo)
 
     def __validar_id(self, identificacion: str) -> str:
-        if not isinstance(identificacion, str) or not identificacion.strip().isdigit():
-            raise ClienteNoValidoError("La identificación debe contener solo números.")
+        if not isinstance(identificacion, str) or not identificacion.strip().isdigit() or len(identificacion.strip()) < 10:
+            raise ClienteNoValidoError("The identification must contain only numbers and be at least 10 characters long.")
         return identificacion.strip()
 
     def __validar_nombre(self, nombre: str) -> str:
         if not isinstance(nombre, str) or len(nombre.strip()) < 3:
-            raise ClienteNoValidoError("El nombre debe tener al menos 3 caracteres.")
+            raise ClienteNoValidoError("The name must have at least 3 characters.")
         return nombre.strip()
 
     def __validar_correo(self, correo: str) -> str:
         if not isinstance(correo, str) or correo.count("@") != 1:
-            raise ClienteNoValidoError("El correo debe contener un único símbolo @.")
+            raise ClienteNoValidoError("The email must contain only one @ symbol.")
         usuario, dominio = correo.strip().split("@")
         if not usuario or not dominio or "." not in dominio:
-            raise ClienteNoValidoError("El correo debe tener usuario y dominio válido.")
+            raise ClienteNoValidoError("The email must have a valid user and domain.")
         partes = dominio.split(".")
         if any(not parte or parte.isspace() for parte in partes) or any(c.isspace() for c in usuario):
-            raise ClienteNoValidoError("El correo no puede tener espacios ni puntos inválidos.")
+            raise ClienteNoValidoError("The email cannot have spaces or invalid dots.")
         return correo.strip()
 
     @property
@@ -89,9 +89,9 @@ class Servicio(EntidadBase, ABC):
 
     def __init__(self, codigo: str, nombre_servicio: str, costo_base: float):
         if not codigo or not codigo.strip():
-            raise ValueError("El código del servicio es obligatorio.")
+            raise ValueError("The service code is required.")
         if not isinstance(costo_base, (int, float)) or isinstance(costo_base, bool) or costo_base <= 0:
-            raise ValueError("El costo base debe ser un número mayor a cero.")
+            raise ValueError("The base cost must be a number greater than zero.")
         self.codigo = codigo.strip()
         self.nombre_servicio = nombre_servicio.strip()
         self.costo_base = float(costo_base)
@@ -105,20 +105,20 @@ class ReservaSalas(Servicio):
     """Servicio especializado de reserva de salas."""
 
     def __init__(self, codigo: str, costo_base: float, capacidad: int):
-        super().__init__(codigo, "Reserva de Sala", costo_base)
+        super().__init__(codigo, "Reservation of Room", costo_base)
         if not isinstance(capacidad, int) or isinstance(capacidad, bool) or capacidad <= 0:
-            raise ValueError("La capacidad de la sala debe ser un entero positivo.")
+            raise ValueError("The capacity of the room must be a positive integer.")
         self.capacidad = capacidad
 
     def calcular_costo(self, cantidad: int, descuento: float | None = None, **kwargs) -> dict:
         if not isinstance(cantidad, int) or isinstance(cantidad, bool) or cantidad < 0:
-            raise ValueError("Las horas deben ser un entero mayor o igual a cero.")
+            raise ValueError("The hours must be a non-negative integer.")
 
         if descuento is None:
             descuento = 0.15 if cantidad >= 5 else (0.10 if cantidad >= 3 else 0.0)
 
         if not isinstance(descuento, (int, float)) or isinstance(descuento, bool) or not (0 <= descuento < 1):
-            raise ValueError("El descuento debe estar entre 0 y 1 (exclusivo).")
+            raise ValueError("The discount must be between 0 and 1 (exclusive).")
 
         subtotal = self.costo_base * cantidad
         valor_desc = subtotal * descuento
@@ -126,24 +126,24 @@ class ReservaSalas(Servicio):
 
         return {
             "subtotal": round(subtotal, 2),
-            "porcentaje_descuento": round(descuento * 100, 2),
-            "descuento": round(valor_desc, 2),
-            "seguro": 0.0,
-            "impuesto": 0.0,
+            "discount_percentage": round(descuento * 100, 2),
+            "discount": round(valor_desc, 2),
+            "insurance": 0.0,
+            "tax": 0.0,
             "total": round(total, 2),
         }
 
     def obtener_detalles(self) -> str:
-        return f"[Sala] {self.nombre_servicio} ({self.codigo}) - Capacidad: {self.capacidad} - ${self.costo_base}/h"
+        return f"[Room] {self.nombre_servicio} ({self.codigo}) - Capacity: {self.capacidad} - ${self.costo_base}/h"
 
 
 class AlquilerEquipos(Servicio):
     """Servicio especializado de alquiler de equipos."""
 
     def __init__(self, codigo: str, costo_base: float, tipo_equipo: str):
-        super().__init__(codigo, "Alquiler de Equipo", costo_base)
+        super().__init__(codigo, "Equipment Rental", costo_base)
         if not tipo_equipo or not tipo_equipo.strip():
-            raise ValueError("El tipo de equipo es obligatorio.")
+            raise ValueError("The equipment type is required.")
         self.tipo_equipo = tipo_equipo.strip()
         self.seguro_activado = False
 
@@ -155,13 +155,13 @@ class AlquilerEquipos(Servicio):
         **kwargs,
     ) -> dict:
         if not isinstance(cantidad, int) or isinstance(cantidad, bool) or cantidad < 0:
-            raise ValueError("Los días deben ser un entero mayor o igual a cero.")
+            raise ValueError("The days must be a non-negative integer.")
 
         if descuento is None:
             descuento = 0.15 if cantidad >= 5 else (0.10 if cantidad >= 3 else 0.0)
 
         if not isinstance(descuento, (int, float)) or isinstance(descuento, bool) or not (0 <= descuento < 1):
-            raise ValueError("El descuento debe estar entre 0 y 1 (exclusivo).")
+            raise ValueError("The discount must be between 0 and 1 (exclusive).")
 
         usar_seguro = self.seguro_activado if seguro is None else bool(seguro)
 
@@ -173,10 +173,10 @@ class AlquilerEquipos(Servicio):
 
         return {
             "subtotal": round(subtotal, 2),
-            "porcentaje_descuento": round(descuento * 100, 2),
-            "descuento": round(valor_desc, 2),
-            "seguro": round(valor_seguro, 2),
-            "impuesto": 0.0,
+            "discount_percentage": round(descuento * 100, 2),
+            "discount": round(valor_desc, 2),
+            "insurance": round(valor_seguro, 2),
+            "tax": 0.0,
             "total": round(total, 2),
         }
 
@@ -187,16 +187,16 @@ class AlquilerEquipos(Servicio):
         self.seguro_activado = False
 
     def obtener_detalles(self) -> str:
-        return f"[Equipo] {self.tipo_equipo} ({self.codigo}) - ${self.costo_base}/día"
+        return f"[Equipment] {self.tipo_equipo} ({self.codigo}) - ${self.costo_base}/day"
 
 
 class AsesoriaEspecializada(Servicio):
     """Servicio especializado de asesorías especializadas."""
 
     def __init__(self, codigo: str, costo_base: float, area: str):
-        super().__init__(codigo, "Asesoría Especializada", costo_base)
+        super().__init__(codigo, "Specialized Consultation", costo_base)
         if not area or not area.strip():
-            raise ValueError("El área de asesoría es obligatoria.")
+            raise ValueError("The area of the consultation is required.")
         self.area = area.strip()
 
     def calcular_costo(
@@ -207,15 +207,15 @@ class AsesoriaEspecializada(Servicio):
         **kwargs,
     ) -> dict:
         if not isinstance(cantidad, int) or isinstance(cantidad, bool) or cantidad < 0:
-            raise ValueError("Las sesiones deben ser un entero mayor o igual a cero.")
+            raise ValueError("The sessions must be a non-negative integer.")
 
         if descuento is None:
             descuento = 0.10 if cantidad >= 5 else (0.05 if cantidad >= 3 else 0.0)
 
         if not isinstance(descuento, (int, float)) or isinstance(descuento, bool) or not (0 <= descuento < 1):
-            raise ValueError("El descuento debe estar entre 0 y 1 (exclusivo).")
+            raise ValueError("The discount must be between 0 and 1 (exclusive).")
         if not isinstance(impuesto, (int, float)) or isinstance(impuesto, bool) or impuesto < 0:
-            raise ValueError("El impuesto debe ser un número mayor o igual a cero.")
+            raise ValueError("The tax must be a non-negative number.")
 
         subtotal = self.costo_base * cantidad
         valor_desc = subtotal * descuento
@@ -225,15 +225,15 @@ class AsesoriaEspecializada(Servicio):
 
         return {
             "subtotal": round(subtotal, 2),
-            "porcentaje_descuento": round(descuento * 100, 2),
-            "descuento": round(valor_desc, 2),
-            "seguro": 0.0,
-            "impuesto": round(valor_imp, 2),
+            "discount_percentage": round(descuento * 100, 2),
+            "discount": round(valor_desc, 2),
+            "insurance": 0.0,
+            "tax": round(valor_imp, 2),
             "total": round(total, 2),
         }
 
     def obtener_detalles(self) -> str:
-        return f"[Asesoría] {self.area} ({self.codigo}) - ${self.costo_base}/sesión"
+        return f"[Consultation] {self.area} ({self.codigo}) - ${self.costo_base}/session"
 
 
 # --- CLASE RESERVA ---
@@ -249,9 +249,9 @@ class Reserva:
         seguro_aplicado: bool = False,
     ):
         if not id_reserva or not id_reserva.strip():
-            raise ReservaError("El ID de la reserva es obligatorio.")
+            raise ReservaError("The ID of the reservation is required.")
         if not isinstance(cantidad_reservada, int) or isinstance(cantidad_reservada, bool) or cantidad_reservada <= 0:
-            raise ReservaError("La cantidad reservada debe ser un entero positivo.")
+            raise ReservaError("The reserved amount must be a positive integer.")
 
         self.id_reserva = id_reserva.strip()
         self.cliente = cliente
@@ -263,11 +263,11 @@ class Reserva:
 
     def avanzar_tiempo(self, cantidad: int) -> None:
         if self.estado != "Pendiente":
-            raise ReservaError(f"No se puede avanzar consumo en estado '{self.estado}'.")
+            raise ReservaError(f"impossible to advance consumption in state '{self.estado}'.")
         if not isinstance(cantidad, int) or isinstance(cantidad, bool) or cantidad <= 0:
-            raise ValueError("La cantidad a consumir debe ser un entero positivo.")
+            raise ValueError("The amount to consume must be a positive integer.")
         if self.cantidad_transcurrida + cantidad > self.cantidad_reservada:
-            raise ReservaError("La cantidad consumida supera la cantidad reservada.")
+            raise ReservaError("The consumed amount exceeds the reserved amount.")
 
         self.cantidad_transcurrida += cantidad
         logging.info(
@@ -284,7 +284,7 @@ class Reserva:
                 self.servicio.activar_seguro() if self.seguro_aplicado else self.servicio.desactivar_seguro()
             return self.servicio.calcular_costo(unidades)
         except Exception as exc:
-            logging.error(f"Error calculando costo en reserva {self.id_reserva}: {exc}")
+            logging.error(f"Error to calculate cost in reservation {self.id_reserva}: {exc}")
             raise ReservaError("No fue posible calcular el costo de la reserva.") from exc
         finally:
             if isinstance(self.servicio, AlquilerEquipos):
@@ -293,44 +293,44 @@ class Reserva:
     def cancelar_reserva(self) -> dict:
         try:
             if self.estado != "Pendiente":
-                raise ReservaError(f"No se puede cancelar una reserva en estado '{self.estado}'.")
+                raise ReservaError(f"impossible to cancel a reservation in state '{self.estado}'.")
             if self.cantidad_transcurrida == self.cantidad_reservada:
-                raise ReservaError("La reserva ya consumió todas sus unidades; debe procesarse.")
+                raise ReservaError("The reservation has already consumed all its units; it must be processed.")
 
             desglose = self.obtener_desglose_costo()
             self.estado = "Cancelada"
         except ReservaError:
-            logging.error(f"Cancelación rechazada en reserva {self.id_reserva}.")
+            logging.error(f"Cancelation rejected in reservation {self.id_reserva}.")
             raise
         except Exception as exc:
-            logging.error(f"Fallo inesperado cancelando reserva {self.id_reserva}: {exc}")
-            raise ReservaError("Error al cancelar la reserva.") from exc
+            logging.error(f"Unexpected failure canceling reservation {self.id_reserva}: {exc}")
+            raise ReservaError("Error canceling the reservation.") from exc
         else:
             logging.info(f"Reserva {self.id_reserva} cancelada. Costo: ${desglose['total']}")
             return desglose
         finally:
-            logging.info(f"Estado final tras cancelar {self.id_reserva}: {self.estado}")
+            logging.info(f"Final status after canceling {self.id_reserva}: {self.estado}")
 
     def procesar_reserva(self) -> dict:
         try:
             if self.estado != "Pendiente":
-                raise ReservaError(f"No se puede procesar una reserva en estado '{self.estado}'.")
+                raise ReservaError(f"impossible to process a reservation in state '{self.estado}'.")
             if self.cantidad_transcurrida <= 0:
-                raise ReservaError("Debe consumir al menos una unidad antes de procesar la reserva.")
+                raise ReservaError("impossible to process a reservation without consuming units.")
 
             desglose = self.obtener_desglose_costo()
             self.estado = "Finalizada"
         except ReservaError:
-            logging.error(f"Reserva {self.id_reserva} no pudo procesarse.")
+            logging.error(f"Reservation {self.id_reserva} could not be processed.")
             raise
         except Exception as exc:
-            logging.error(f"Error inesperado procesando {self.id_reserva}: {exc}")
-            raise ReservaError("Fallo al procesar la reserva.") from exc
+            logging.error(f"Unexpected error processing {self.id_reserva}: {exc}")
+            raise ReservaError("Failed to process the reservation.") from exc
         else:
-            logging.info(f"Reserva {self.id_reserva} finalizada. Total: ${desglose['total']}")
+            logging.info(f"Reservation {self.id_reserva} completed. Total: ${desglose['total']}")
             return desglose
         finally:
-            logging.info(f"Estado actual de {self.id_reserva}: {self.estado}")
+            logging.info(f"Current state of {self.id_reserva}: {self.estado}")
 
 
 # --- GESTOR GENERAL ---
@@ -344,28 +344,28 @@ class SistemaFJ:
 
     def registrar_cliente(self, cliente: Cliente) -> None:
         if any(c.identificacion == cliente.identificacion for c in self.clientes):
-            raise ClienteNoValidoError(f"Ya existe un cliente con ID '{cliente.identificacion}'.")
+            raise ClienteNoValidoError(f"Client with ID '{cliente.identificacion}' already exists.")
         self.clientes.append(cliente)
-        logging.info(f"Cliente registrado: {cliente.nombre} ({cliente.identificacion})")
+        logging.info(f"Client registered: {cliente.nombre} ({cliente.identificacion})")
 
     def registrar_servicio(self, servicio: Servicio) -> None:
         if any(s.codigo == servicio.codigo for s in self.servicios):
-            raise ErrorSistemaFJ(f"Ya existe un servicio con código '{servicio.codigo}'.")
+            raise ErrorSistemaFJ(f"Service with code '{servicio.codigo}' already exists.")
         self.servicios.append(servicio)
-        logging.info(f"Servicio registrado: {servicio.codigo}")
+        logging.info(f"Service registered: {servicio.codigo}")
 
     def registrar_reserva(self, reserva: Reserva) -> None:
         if any(r.id_reserva == reserva.id_reserva for r in self.reservas):
-            raise ReservaError(f"Ya existe la reserva '{reserva.id_reserva}'.")
+            raise ReservaError(f"Reservation '{reserva.id_reserva}' already exists.")
         if reserva.cliente not in self.clientes:
-            raise ReservaError("El cliente no está registrado.")
+            raise ReservaError("The client is not registered.")
         if reserva.servicio not in self.servicios:
-            raise ReservaError("El servicio no está registrado.")
+            raise ReservaError("The service is not registered.")
         self.reservas.append(reserva)
-        logging.info(f"Reserva registrada: {reserva.id_reserva}")
+        logging.info(f"Reservation registered: {reserva.id_reserva}")
 
     def ejecutar_simulacion_10_operaciones(self) -> list[str]:
-        """Simula 10 operaciones (válidas e inválidas) sin interrumpir el sistema."""
+        """Simulates 10 operations (valid and invalid) without interrupting the system."""
         resultados: list[str] = []
         cliente_base: Cliente | None = None
         sala_base: ReservaSalas | None = None
@@ -373,21 +373,21 @@ class SistemaFJ:
 
         # 1. Registro válido de cliente
         try:
-            cliente_base = Cliente("9001001", "Laura Méndez", "laura.mendez@correo.com")
+            cliente_base = Cliente("9001001001", "Laura Méndez", "laura.mendez@correo.com")
             self.registrar_cliente(cliente_base)
-            resultados.append("Op 1 [OK]: Cliente válido registrado.")
+            resultados.append("Op 1 [OK]: Client valid registered.")
         except ErrorSistemaFJ as exc:
-            logging.error(f"Op 1 falló: {exc}")
-            resultados.append(f"Op 1 [ERROR CONTROLADO]: {exc}")
+            logging.error(f"Op 1 failed: {exc}")
+            resultados.append(f"Op 1 [HANDLED ERROR]: {exc}")
 
         # 2. Registro inválido de cliente (ID no numérico y correo sin @)
         try:
             cliente_malo = Cliente("ID-X", "Lu", "correo_invalido")
             self.registrar_cliente(cliente_malo)
-            resultados.append("Op 2 [FALLO]: Se aceptó cliente inválido.")
+            resultados.append("Op 2 [FAILED]: Accepted invalid client data.")
         except ClienteNoValidoError as exc:
-            logging.error(f"Op 2 error controlado: {exc}")
-            resultados.append(f"Op 2 [ERROR CONTROLADO]: {exc}")
+            logging.error(f"Op 2 Handled error: {exc}")
+            resultados.append(f"Op 2 [HANDLED ERROR]: {exc}")
 
         # 3. Registro duplicado de cliente
         try:
@@ -395,39 +395,39 @@ class SistemaFJ:
                 raise ClienteNoValidoError("Cliente base no disponible.")
             duplicado = Cliente(cliente_base.identificacion, "Otro Nombre", "otro@correo.com")
             self.registrar_cliente(duplicado)
-            resultados.append("Op 3 [FALLO]: Se aceptó cliente duplicado.")
+            resultados.append("Op 3 [FAILED]: Accepted duplicate client data.")
         except ClienteNoValidoError as exc:
-            logging.error(f"Op 3 error controlado: {exc}")
-            resultados.append(f"Op 3 [ERROR CONTROLADO]: {exc}")
+            logging.error(f"Op 3 Handled error: {exc}")
+            resultados.append(f"Op 3 [HANDLED ERROR]: {exc}")
 
         # 4. Creación correcta de servicio (Reserva de Sala)
         try:
-            sala_base = ReservaSalas("SAL-10", 60.0, 12)
+            sala_base = ReservaSalas("S002", 60.0, 12)
             self.registrar_servicio(sala_base)
-            resultados.append("Op 4 [OK]: Servicio de sala registrado.")
+            resultados.append("Op 4 [OK]: Service of room registered.")
         except (ValueError, ErrorSistemaFJ) as exc:
-            logging.error(f"Op 4 falló: {exc}")
-            resultados.append(f"Op 4 [ERROR CONTROLADO]: {exc}")
+            logging.error(f"Op 4 failed: {exc}")
+            resultados.append(f"Op 4 [HANDLED ERROR]: {exc}")
 
         # 5. Creación incorrecta de servicio (capacidad inválida)
         try:
             sala_mala = ReservaSalas("SAL-ERR", 60.0, 0)
             self.registrar_servicio(sala_mala)
-            resultados.append("Op 5 [FALLO]: Se aceptó sala con capacidad 0.")
+            resultados.append("Op 5 [FAILED]: Accepted room with zero capacity.")
         except ValueError as exc:
-            logging.error(f"Op 5 error controlado: {exc}")
-            resultados.append(f"Op 5 [ERROR CONTROLADO]: {exc}")
+            logging.error(f"Op 5 Handled error: {exc}")
+            resultados.append(f"Op 5 [HANDLED ERROR]: {exc}")
 
         # 6. Creación correcta de servicio (Alquiler de Equipo y Asesoría)
         try:
-            equipo = AlquilerEquipos("EQ-10", 90.0, "Portátil")
-            asesoria = AsesoriaEspecializada("ASE-10", 120.0, "Seguridad Informática")
+            equipo = AlquilerEquipos("E002", 90.0, "Portátil")
+            asesoria = AsesoriaEspecializada("A002", 120.0, "Seguridad Informática")
             self.registrar_servicio(equipo)
             self.registrar_servicio(asesoria)
-            resultados.append("Op 6 [OK]: Servicios de equipo y asesoría registrados.")
+            resultados.append("Op 6 [OK]: Services of equipment and consultation registered.")
         except (ValueError, ErrorSistemaFJ) as exc:
-            logging.error(f"Op 6 falló: {exc}")
-            resultados.append(f"Op 6 [ERROR CONTROLADO]: {exc}")
+            logging.error(f"Op 6 failed: {exc}")
+            resultados.append(f"Op 6 [HANDLED ERROR]: {exc}")
 
         # 7. Reserva exitosa y procesada con consumo previo
         try:
@@ -437,44 +437,44 @@ class SistemaFJ:
             self.registrar_reserva(reserva_valida)
             reserva_valida.avanzar_tiempo(3)
             desglose = reserva_valida.procesar_reserva()
-            resultados.append(f"Op 7 [OK]: Reserva SIM-001 finalizada. Total: ${desglose['total']}")
+            resultados.append(f"Op 7 [OK]: Reservation SIM-001 finalized. Total: ${desglose['total']}")
         except Exception as exc:
-            logging.error(f"Op 7 falló: {exc}")
-            resultados.append(f"Op 7 [ERROR CONTROLADO]: {exc}")
+            logging.error(f"Op 7 failed: {exc}")
+            resultados.append(f"Op 7 [HANDLED ERROR]: {exc}")
 
         # 8. Reserva fallida por cliente no registrado
         try:
-            cliente_no_reg = Cliente("8888888", "Pedro Sin Registro", "pedro@correo.com")
+            cliente_no_reg = Cliente("8888888001", "Pedro Sin Registro", "pedro@correo.com")
             if sala_base is None:
-                raise ReservaError("Servicio no disponible.")
+                raise ReservaError("Service not available.")
             res_sin_cli = Reserva("SIM-002", cliente_no_reg, sala_base, 2)
             self.registrar_reserva(res_sin_cli)
-            resultados.append("Op 8 [FALLO]: Se registró reserva de cliente no inscrito.")
+            resultados.append("Op 8 [FAILED]: Reservation registered for unregistered client.")
         except ReservaError as exc:
-            logging.error(f"Op 8 error controlado: {exc}")
-            resultados.append(f"Op 8 [ERROR CONTROLADO]: {exc}")
+            logging.error(f"Op 8 Handled error: {exc}")
+            resultados.append(f"Op 8 [HANDLED ERROR]: {exc}")
 
         # 9. Reserva fallida por intentar procesar sin consumo
         try:
             if cliente_base is None or sala_base is None:
-                raise ReservaError("Datos no disponibles.")
+                raise ReservaError("Data not available.")
             res_sin_uso = Reserva("SIM-003", cliente_base, sala_base, 2)
             self.registrar_reserva(res_sin_uso)
             res_sin_uso.procesar_reserva()
-            resultados.append("Op 9 [FALLO]: Se procesó reserva sin consumo.")
+            resultados.append("Op 9 [FAILED]: Process reservation without consumption.")
         except ReservaError as exc:
-            logging.error(f"Op 9 error controlado: {exc}")
-            resultados.append(f"Op 9 [ERROR CONTROLADO]: {exc}")
+            logging.error(f"Op 9 Handled error: {exc}")
+            resultados.append(f"Op 9 [HANDLED ERROR]: {exc}")
 
         # 10. Intento de cancelar reserva ya finalizada
         try:
             if reserva_valida is None:
                 raise ReservaError("Reserva base no disponible.")
             reserva_valida.cancelar_reserva()
-            resultados.append("Op 10 [FALLO]: Se canceló reserva ya finalizada.")
+            resultados.append("Op 10 [FAILED]: Cancel reservation already finalized.")
         except ReservaError as exc:
-            logging.error(f"Op 10 error controlado: {exc}")
-            resultados.append(f"Op 10 [ERROR CONTROLADO]: {exc}")
+            logging.error(f"Op 10 Handled error: {exc}")
+            resultados.append(f"Op 10 [HANDLED ERROR]: {exc}")
 
         return resultados
 
@@ -483,7 +483,7 @@ class SistemaFJ:
 class SistemaFJApp:
     def __init__(self, root: tk.Tk):
         self.root = root
-        self.root.title("Sistema Integral Software FJ")
+        self.root.title("System Management of Clients, Services and Reservations - Software FJ")
         self.root.geometry("920x700")
         self.sistema = SistemaFJ()
         self.reserva_seleccionada: Reserva | None = None
@@ -496,8 +496,8 @@ class SistemaFJApp:
     def _cargar_datos_iniciales(self) -> None:
         try:
             for c in [
-                Cliente("10000001", "Ana Perez", "ana@gmail.com"),
-                Cliente("10000002", "Carlos Gomez", "carlos@gmail.com"),
+                Cliente("1000000101", "Ana Perez", "ana@gmail.com"),
+                Cliente("1000000202", "Carlos Gomez", "carlos@gmail.com"),
             ]:
                 self.sistema.registrar_cliente(c)
 
@@ -508,12 +508,12 @@ class SistemaFJApp:
             ]:
                 self.sistema.registrar_servicio(s)
         except ErrorSistemaFJ as exc:
-            logging.error(f"Error cargando datos iniciales: {exc}")
+            logging.error(f"Error Loading Initial Data: {exc}")
 
     def _construir_interfaz(self) -> None:
         titulo = ttk.Label(
             self.root,
-            text="Sistema de Gestión de Clientes, Servicios y Reservas - Software FJ",
+            text="System Management of Clients, Services and Reservations - Software FJ",
             font=("Arial", 15, "bold"),
         )
         titulo.pack(pady=10)
@@ -529,85 +529,85 @@ class SistemaFJApp:
         self._actualizar_combos()
 
     def _crear_panel_clientes(self, contenedor: ttk.Frame) -> None:
-        frame = ttk.LabelFrame(contenedor, text="Registro de Clientes", padding=12)
+        frame = ttk.LabelFrame(contenedor, text="Customer Registration", padding=12)
         frame.grid(row=0, column=0, padx=6, pady=6, sticky="nsew")
 
-        ttk.Label(frame, text="Identificación:").grid(row=0, column=0, sticky="w", pady=4)
+        ttk.Label(frame, text="Identification:").grid(row=0, column=0, sticky="w", pady=4)
         self.txt_id = ttk.Entry(frame, width=26)
         self.txt_id.grid(row=0, column=1, pady=4)
 
-        ttk.Label(frame, text="Nombre:").grid(row=1, column=0, sticky="w", pady=4)
+        ttk.Label(frame, text="Name:").grid(row=1, column=0, sticky="w", pady=4)
         self.txt_nombre = ttk.Entry(frame, width=26)
         self.txt_nombre.grid(row=1, column=1, pady=4)
 
-        ttk.Label(frame, text="Correo:").grid(row=2, column=0, sticky="w", pady=4)
+        ttk.Label(frame, text="Email:").grid(row=2, column=0, sticky="w", pady=4)
         self.txt_correo = ttk.Entry(frame, width=26)
         self.txt_correo.grid(row=2, column=1, pady=4)
 
-        ttk.Button(frame, text="Registrar Cliente", command=self.accion_registrar_cliente).grid(
+        ttk.Button(frame, text="Register Customer", command=self.accion_registrar_cliente).grid(
             row=3, column=0, columnspan=2, pady=10
         )
 
         ttk.Separator(frame).grid(row=4, column=0, columnspan=2, sticky="ew", pady=10)
 
-        ttk.Button(frame, text="Ejecutar 10 Pruebas", command=self.accion_ejecutar_10_pruebas).grid(
+        ttk.Button(frame, text="Execute 10 Tests", command=self.accion_ejecutar_10_pruebas).grid(
             row=5, column=0, columnspan=2, pady=6
         )
 
     def _crear_panel_reservas(self, contenedor: ttk.Frame) -> None:
-        frame = ttk.LabelFrame(contenedor, text="Gestión de Reservas", padding=12)
+        frame = ttk.LabelFrame(contenedor, text="Reservation Management", padding=12)
         frame.grid(row=0, column=1, padx=6, pady=6, sticky="nsew")
 
-        ttk.Label(frame, text="Cliente:").grid(row=0, column=0, sticky="w", pady=4)
+        ttk.Label(frame, text="Customer:").grid(row=0, column=0, sticky="w", pady=4)
         self.cmb_clientes = ttk.Combobox(frame, width=24, state="readonly")
         self.cmb_clientes.grid(row=0, column=1, pady=4)
 
-        ttk.Label(frame, text="Servicio:").grid(row=1, column=0, sticky="w", pady=4)
+        ttk.Label(frame, text="Service:").grid(row=1, column=0, sticky="w", pady=4)
         self.cmb_servicios = ttk.Combobox(frame, width=24, state="readonly")
         self.cmb_servicios.grid(row=1, column=1, pady=4)
         self.cmb_servicios.bind("<<ComboboxSelected>>", self.actualizar_info_servicio)
 
-        self.lbl_info_servicio = ttk.Label(frame, text="Seleccione un servicio.")
+        self.lbl_info_servicio = ttk.Label(frame, text="Select a service.")
         self.lbl_info_servicio.grid(row=2, column=0, columnspan=2, pady=4)
 
-        ttk.Label(frame, text="Cantidad a reservar:").grid(row=3, column=0, sticky="w", pady=4)
+        ttk.Label(frame, text="Quantity to reserve:").grid(row=3, column=0, sticky="w", pady=4)
         self.txt_cantidad = ttk.Entry(frame, width=26)
         self.txt_cantidad.grid(row=3, column=1, pady=4)
 
         self.var_seguro = tk.BooleanVar(value=False)
         self.chk_seguro = ttk.Checkbutton(
-            frame, text="Seguro adicional (+$15)", variable=self.var_seguro, state="disabled"
+            frame, text="Additional Insurance (+$15)", variable=self.var_seguro, state="disabled"
         )
         self.chk_seguro.grid(row=4, column=0, columnspan=2, pady=4)
 
-        ttk.Button(frame, text="Crear Reserva", command=self.accion_crear_reserva).grid(
+        ttk.Button(frame, text="Create Reservation", command=self.accion_crear_reserva).grid(
             row=5, column=0, columnspan=2, pady=8
         )
 
         ttk.Separator(frame).grid(row=6, column=0, columnspan=2, sticky="ew", pady=8)
 
-        ttk.Label(frame, text="Reserva activa:").grid(row=7, column=0, sticky="w", pady=4)
+        ttk.Label(frame, text="Active Reservation:").grid(row=7, column=0, sticky="w", pady=4)
         self.cmb_reservas = ttk.Combobox(frame, width=24, state="readonly")
         self.cmb_reservas.grid(row=7, column=1, pady=4)
         self.cmb_reservas.bind("<<ComboboxSelected>>", self.seleccionar_reserva)
 
-        ttk.Label(frame, text="Unidades a consumir:").grid(row=8, column=0, sticky="w", pady=4)
+        ttk.Label(frame, text="Units to consume:").grid(row=8, column=0, sticky="w", pady=4)
         self.txt_consumo = ttk.Entry(frame, width=26)
         self.txt_consumo.insert(0, "1")
         self.txt_consumo.grid(row=8, column=1, pady=4)
 
-        ttk.Button(frame, text="Avanzar Consumo", command=self.accion_avanzar_consumo).grid(
+        ttk.Button(frame, text="Advance Consumption", command=self.accion_avanzar_consumo).grid(
             row=9, column=0, columnspan=2, pady=4
         )
-        ttk.Button(frame, text="Procesar / Finalizar", command=self.accion_procesar_reserva).grid(
+        ttk.Button(frame, text="Process / Finalize", command=self.accion_procesar_reserva).grid(
             row=10, column=0, columnspan=2, pady=4
         )
-        ttk.Button(frame, text="Cancelar Reserva", command=self.accion_cancelar_reserva).grid(
+        ttk.Button(frame, text="Cancel Reservation", command=self.accion_cancelar_reserva).grid(
             row=11, column=0, columnspan=2, pady=4
         )
 
     def _crear_panel_resultados(self) -> None:
-        frame = ttk.LabelFrame(self.root, text="Resultados y Eventos", padding=10)
+        frame = ttk.LabelFrame(self.root, text="Results and Events", padding=10)
         frame.pack(fill="both", expand=True, padx=16, pady=10)
 
         self.txt_resultados = tk.Text(frame, height=11, state="disabled")
@@ -632,7 +632,7 @@ class SistemaFJApp:
         servicio = self.servicios_por_opcion.get(self.cmb_servicios.get())
         if servicio is None:
             return
-        self.lbl_info_servicio.config(text=f"Costo base: ${servicio.costo_base} | {servicio.nombre_servicio}")
+        self.lbl_info_servicio.config(text=f"Base Cost: ${servicio.costo_base} | {servicio.nombre_servicio}")
         if isinstance(servicio, AlquilerEquipos):
             self.chk_seguro.config(state="normal")
         else:
@@ -642,7 +642,7 @@ class SistemaFJApp:
     def accion_ejecutar_10_pruebas(self) -> None:
         lineas = self.sistema.ejecutar_simulacion_10_operaciones()
         self._actualizar_combos()
-        self._mostrar_mensaje("--- SIMULACIÓN DE 10 OPERACIONES ---\n" + "\n".join(lineas))
+        self._mostrar_mensaje("--- SIMULATION OF 10 OPERATIONS ---\n" + "\n".join(lineas))
 
     def accion_registrar_cliente(self) -> None:
         try:
@@ -652,10 +652,10 @@ class SistemaFJApp:
             self.txt_id.delete(0, tk.END)
             self.txt_nombre.delete(0, tk.END)
             self.txt_correo.delete(0, tk.END)
-            self._mostrar_mensaje(f"Cliente registrado: {cliente.obtener_detalles()}")
+            self._mostrar_mensaje(f"Client registered: {cliente.obtener_detalles()}")
         except Exception as exc:
-            logging.error(f"Error al registrar cliente en GUI: {exc}")
-            self._mostrar_mensaje(f"Error al registrar cliente: {exc}")
+            logging.error(f"Error to register client in GUI: {exc}")
+            self._mostrar_mensaje(f"Error to register client: {exc}")
 
     def accion_crear_reserva(self) -> None:
         try:
@@ -664,7 +664,7 @@ class SistemaFJApp:
             cant_texto = self.txt_cantidad.get().strip()
 
             if not nombre_cli or not opcion_srv or not cant_texto:
-                raise ReservaError("Debe seleccionar cliente, servicio e ingresar cantidad.")
+                raise ReservaError("Must select client, service and enter quantity.")
 
             cantidad = int(cant_texto)
             cliente = next(c for c in self.sistema.clientes if c.nombre == nombre_cli)
@@ -683,73 +683,73 @@ class SistemaFJApp:
             self._actualizar_combo_reservas()
             self.txt_cantidad.delete(0, tk.END)
             self.var_seguro.set(False)
-            self._mostrar_mensaje(self._formatear_desglose(reserva, desglose, "RESERVA CREADA (ESTIMADO)"))
+            self._mostrar_mensaje(self._formatear_desglose(reserva, desglose, "RESERVATION (ESTIMATED COST)"))
         except ValueError as exc:
-            logging.error(f"Cantidad inválida al crear reserva: {exc}")
-            self._mostrar_mensaje("Error: la cantidad a reservar debe ser un número entero.")
+            logging.error(f"Invalid quantity when creating reservation: {exc}")
+            self._mostrar_mensaje("Error: the quantity to reserve must be an integer.")
         except Exception as exc:
-            logging.error(f"Error al crear reserva en GUI: {exc}")
-            self._mostrar_mensaje(f"Error al crear reserva: {exc}")
+            logging.error(f"Error when creating reservation in GUI: {exc}")
+            self._mostrar_mensaje(f"Error when creating reservation: {exc}")
 
     def seleccionar_reserva(self, event=None) -> None:
         self.reserva_seleccionada = self.reservas_por_opcion.get(self.cmb_reservas.get())
         if self.reserva_seleccionada:
             r = self.reserva_seleccionada
             self._mostrar_mensaje(
-                f"Reserva {r.id_reserva} seleccionada | Estado: {r.estado} | "
-                f"Consumido: {r.cantidad_transcurrida}/{r.cantidad_reservada} | "
-                f"Restante: {r.obtener_cantidad_restante()}"
+                f"Reservation {r.id_reserva} selected | Status: {r.estado} | "
+                f"Consumed: {r.cantidad_transcurrida}/{r.cantidad_reservada} | "
+                f"Remaining: {r.obtener_cantidad_restante()}"
             )
 
     def accion_avanzar_consumo(self) -> None:
         try:
             if self.reserva_seleccionada is None:
-                raise ReservaError("Seleccione una reserva primero.")
+                raise ReservaError("Must select a reservation first.")
             unidades = int(self.txt_consumo.get().strip())
             self.reserva_seleccionada.avanzar_tiempo(unidades)
             self._actualizar_combo_reservas()
             r = self.reserva_seleccionada
             self._mostrar_mensaje(
-                f"Consumo actualizado en {r.id_reserva}: {r.cantidad_transcurrida}/{r.cantidad_reservada}."
+                f"Consumption updated in {r.id_reserva}: {r.cantidad_transcurrida}/{r.cantidad_reservada}."
             )
         except ValueError:
-            self._mostrar_mensaje("Error: ingrese un número entero válido para consumir.")
+            self._mostrar_mensaje("Error: enter a valid integer for consumption.")
         except Exception as exc:
-            logging.error(f"Error al avanzar consumo: {exc}")
+            logging.error(f"Error when advancing consumption: {exc}")
             self._mostrar_mensaje(f"Error: {exc}")
 
     def accion_procesar_reserva(self) -> None:
         try:
             if self.reserva_seleccionada is None:
-                raise ReservaError("Seleccione una reserva primero.")
+                raise ReservaError("Must select a reservation first.")
             desglose = self.reserva_seleccionada.procesar_reserva()
             self._actualizar_combo_reservas()
             self._mostrar_mensaje(
-                self._formatear_desglose(self.reserva_seleccionada, desglose, "RESERVA FINALIZADA")
+                self._formatear_desglose(self.reserva_seleccionada, desglose, "RESERVATION FINALIZED")
             )
         except Exception as exc:
-            logging.error(f"Error al procesar reserva: {exc}")
+            logging.error(f"Error when processing reservation: {exc}")
             self._mostrar_mensaje(f"Error: {exc}")
 
     def accion_cancelar_reserva(self) -> None:
         try:
             if self.reserva_seleccionada is None:
-                raise ReservaError("Seleccione una reserva primero.")
+                raise ReservaError("Must select a reservation first.")
             desglose = self.reserva_seleccionada.cancelar_reserva()
             self._actualizar_combo_reservas()
             self._mostrar_mensaje(
-                self._formatear_desglose(self.reserva_seleccionada, desglose, "RESERVA CANCELADA")
+                self._formatear_desglose(self.reserva_seleccionada, desglose, "RESERVATION CANCELED")
             )
         except Exception as exc:
-            logging.error(f"Error al cancelar reserva: {exc}")
+            logging.error(f"Error when canceling reservation: {exc}")
             self._mostrar_mensaje(f"Error: {exc}")
 
     def _formatear_desglose(self, reserva: Reserva, desglose: dict, encabezado: str) -> str:
         return (
             f"=== {encabezado} ({reserva.id_reserva}) ===\n"
-            f"Cliente: {reserva.cliente.nombre} | Servicio: {reserva.servicio.nombre_servicio}\n"
-            f"Subtotal: ${desglose['subtotal']} | Descuento ({desglose['porcentaje_descuento']}%): -${desglose['descuento']}\n"
-            f"Seguro: ${desglose['seguro']} | Impuesto: ${desglose['impuesto']} | TOTAL: ${desglose['total']}"
+            f"Client: {reserva.cliente.nombre} | Service: {reserva.servicio.nombre_servicio}\n"
+            f"Subtotal: ${desglose['subtotal']} | Discount ({desglose['discount_percentage']}%): -${desglose['discount']}\n"
+            f"Insurance: ${desglose['insurance']} | Tax: ${desglose['tax']} | TOTAL: ${desglose['total']}"
         )
 
     def _mostrar_mensaje(self, texto: str) -> None:
